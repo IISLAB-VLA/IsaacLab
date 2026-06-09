@@ -111,7 +111,7 @@ exclude = [
 ]
 
 typeCheckingMode = "basic"
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 pythonPlatform = "Linux"
 enableTypeIgnoreComments = true
 

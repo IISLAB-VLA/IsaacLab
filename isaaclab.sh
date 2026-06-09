@@ -43,9 +43,9 @@ install_system_deps() {
     fi
 }
 
-# Returns success (exit code 0 / "true") if the detected Isaac Sim version starts with 4.5,
-# otherwise returns non-zero ("false"). Works with both symlinked binary installs and pip installs.
-is_isaacsim_version_4_5() {
+# Echoes the detected Isaac Sim version string (e.g. "4.5.0", "5.1.0", "6.0.0") or
+# empty if it cannot be determined. Works with both symlinked binary installs and pip installs.
+get_isaacsim_version() {
     local version=""
     local python_exe
     python_exe=$(extract_python_exe)
@@ -83,8 +83,17 @@ PY
 )
     fi
 
-    # Final decision: return success if version begins with "4.5", 0 if match, 1 otherwise.
-    [[ "$version" == 4.5* ]]
+    echo "$version"
+}
+
+# Returns success ("true") if the detected Isaac Sim version starts with 4.5, else non-zero.
+is_isaacsim_version_4_5() {
+    [[ "$(get_isaacsim_version)" == 4.5* ]]
+}
+
+# Returns success ("true") if the detected Isaac Sim version starts with 6.0, else non-zero.
+is_isaacsim_version_6_0() {
+    [[ "$(get_isaacsim_version)" == 6.0* ]]
 }
 
 # check if running in docker
@@ -354,13 +363,18 @@ setup_conda_env() {
         echo -e "[INFO] Creating conda environment named '${env_name}'..."
         echo -e "[INFO] Installing dependencies from ${ISAACLAB_PATH}/environment.yml"
 
-        # patch Python version if needed, but back up first
+        # patch Python version to match the detected Isaac Sim release, but back up first.
+        # environment.yml defaults to python=3.12 (Isaac Sim 6.0); older releases are patched down.
         cp "${ISAACLAB_PATH}/environment.yml"{,.bak}
         if is_isaacsim_version_4_5; then
             echo "[INFO] Detected Isaac Sim 4.5 → forcing python=3.10"
-            sed -i 's/^  - python=3\.11/  - python=3.10/' "${ISAACLAB_PATH}/environment.yml"
+            sed -i 's/^  - python=3\.[0-9]*/  - python=3.10/' "${ISAACLAB_PATH}/environment.yml"
+        elif is_isaacsim_version_6_0; then
+            echo "[INFO] Detected Isaac Sim 6.0 → forcing python=3.12"
+            sed -i 's/^  - python=3\.[0-9]*/  - python=3.12/' "${ISAACLAB_PATH}/environment.yml"
         else
-            echo "[INFO] Isaac Sim >= 5.0 detected, installing python=3.11"
+            echo "[INFO] Isaac Sim 5.0/5.1 detected → forcing python=3.11"
+            sed -i 's/^  - python=3\.[0-9]*/  - python=3.11/' "${ISAACLAB_PATH}/environment.yml"
         fi
 
         conda env create -y --file ${ISAACLAB_PATH}/environment.yml -n ${env_name}

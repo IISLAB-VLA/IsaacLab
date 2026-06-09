@@ -43,6 +43,11 @@ EXTRAS_REQUIRE = {
     "sb3": ["stable-baselines3>=2.6", "tqdm", "rich"],  # tqdm/rich for progress bar
     "skrl": ["skrl>=1.4.3"],
     "rl-games": [
+        # NOTE (Isaac Sim 6.0 / Python 3.12 port): upstream isaac-sim/rl_games has NO python3.12
+        # branch — only `master` and `python3.11`. The python3.11 branch also hard-pins
+        # numpy==1.26, which conflicts with the numpy>=2 stack used by Isaac Sim 6.0. rl-games is
+        # an OPTIONAL backend; the other RL extras (sb3 / skrl / rsl-rl) support Python 3.12 cleanly.
+        # Pin left at python3.11 (closest working source) until an upstream 3.12/numpy-2 branch exists.
         "rl-games @ git+https://github.com/isaac-sim/rl_games.git@python3.11",
         "gym",
     ],  # rl-games still needs gym :(
@@ -76,9 +81,11 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Isaac Sim :: 4.5.0",
         "Isaac Sim :: 5.0.0",
         "Isaac Sim :: 5.1.0",
+        "Isaac Sim :: 6.0.0",
     ],
     zip_safe=False,
 )
