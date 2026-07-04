@@ -868,8 +868,16 @@ def bind_physics_material(
     # check if prim has collision applied on it
     has_physics_scene_api = prim.HasAPI(PhysxSchema.PhysxSceneAPI)
     has_collider = prim.HasAPI(UsdPhysics.CollisionAPI)
-    has_deformable_body = prim.HasAPI(PhysxSchema.PhysxDeformableBodyAPI)
-    has_particle_system = prim.IsA(PhysxSchema.PhysxParticleSystem)
+    # The deformable/particle schema family is removed from PhysxSchema on Isaac Sim 6.0
+    # Newton-era Kit apps (attribute-pruned module): there the subsystem does not exist, so
+    # "prim has no deformable body / particle system" is the factually correct answer and the
+    # function proceeds to the collider/scene bind branches it still fully supports.
+    has_deformable_body = hasattr(PhysxSchema, "PhysxDeformableBodyAPI") and prim.HasAPI(
+        PhysxSchema.PhysxDeformableBodyAPI
+    )
+    has_particle_system = hasattr(PhysxSchema, "PhysxParticleSystem") and prim.IsA(
+        PhysxSchema.PhysxParticleSystem
+    )
     if not (has_physics_scene_api or has_collider or has_deformable_body or has_particle_system):
         logger.debug(
             f"Cannot apply physics material '{material_path}' on prim '{prim_path}'. It is neither a"
